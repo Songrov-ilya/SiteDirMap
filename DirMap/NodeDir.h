@@ -4,7 +4,9 @@
 #include <QVector>
 
 struct NodeDir{
-    QString pathDir;
     QVector<NodeDir> vecChildren;
+    QString myPath;
+    NodeDir() {}
+    NodeDir(const QString &path) : myPath(path) {}
 };
 

@@ -10,10 +10,12 @@
 class DirMap : public QObject
 {
     Q_OBJECT
+    unsigned int maxAllWorkersDir;
+    unsigned int haveAllWorkersDirFinished;
     QVector<QThread*> vecThreads;
-    NodeDir nodeDir;
-    QVector<NodeDir*> vecUnexploredNodes;
-    QMutex mutexDir;
+    NodeDir nodeDirRoot;
+    QVector<NodeDir*> vecUnexploredNodesDir;
+    QMutex mutexDirUnexplored;
 public:
     explicit DirMap(QObject *parent = nullptr);
     ~DirMap();
@@ -21,11 +23,12 @@ public:
     void create(const QString &targetDir, const QString &fileOutput);
 
 private slots:
-    void writeResults();
+    void workerStarted(const unsigned int nameWorker);
+    void workerFinished(const unsigned int nameWorker);
 private:
     inline void createWorkersThreads();
 
 signals:
-    void findDirs(NodeDir *nodeDir, QVector<NodeDir*> vecUnexploredNodes, QMutex *mutexDir);
+    void findDirs();
 };
 
