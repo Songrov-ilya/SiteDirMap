@@ -51,12 +51,15 @@ void DirWorker::findChildren(NodeDir *exploredNode)
 
     NodeDir node(listChildrenFolders.last());
     exploredNode->vecChildren.append(node);
-    findChildren(&exploredNode->vecChildren.last());
     emit unexploredNodeAppeared();
+    findChildren(&exploredNode->vecChildren.last());
 }
 
 QStringList DirWorker::getFolders(const QString &path)
 {
-    qDebug() << "folders" << QDir(path).entryList(QDir::Dirs | QDir::NoDotAndDotDot) << Qt::endl;
-    return QDir(path).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    QDir dir(path);
+    QStringList list = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    qDebug() << "folders" << list << Qt::endl;
+    std::for_each(list.begin(), list.end(), [&path](QString &child){ child.insert(0, path + "/"); });
+    return list;
 }
