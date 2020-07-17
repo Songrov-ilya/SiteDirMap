@@ -21,32 +21,37 @@ void DirMap::create(const QString &targetDir, const QString &fileOutput)
         qDebug() << "sory, your target dir is not exist" << Qt::endl;
         return;
     }
-    nodeDirRoot.myPath = targetDir;
+    nodeDirRoot.setMyPath(targetDir);
     vecUnexploredNodesDir.append(&nodeDirRoot);
     emit findDirs();
 }
 
 void DirMap::workerStarted(const unsigned nameWorker)
 {
+    bitHaveAllWorkersFinished.clearBit(nameWorker);
     qDebug() << nameWorker << "nameWorker statrted" << Qt::endl;
-    haveAllWorkersDirFinished -= nameWorker;
 }
 
 void DirMap::workerFinished(const unsigned nameWorker)
 {
-    haveAllWorkersDirFinished += nameWorker;
+    bitHaveAllWorkersFinished.setBit(nameWorker);
     qDebug() << nameWorker << "nameWorker finished" << Qt::endl;
-    if (haveAllWorkersDirFinished == maxAllWorkersDir) {
-        qDebug() << "all workers finished!" << Qt::endl;
+    for (int var = 0; var < bitHaveAllWorkersFinished.size(); ++var) {
+        if(!bitHaveAllWorkersFinished.testBit(var)){
+            return;
+        }
     }
+    disconnect(this, nullptr, nullptr, nullptr);
+    qDebug() << "all workers finished!" << Qt::endl;
+//    showDirMap();
 }
 
 void DirMap::createWorkersThreads()
 {
     /* finish at the end */ // 1 + 2 + ... + (n – 1) + n = n × (n+1) / 2
-    auto processor_count = std::thread::hardware_concurrency();
-    maxAllWorkersDir = processor_count * (processor_count + 1) / 2;
-    haveAllWorkersDirFinished = maxAllWorkersDir;
+    unsigned int processor_count = std::thread::hardware_concurrency();
+    processor_count = 2;
+    bitHaveAllWorkersFinished.resize(processor_count);
 //    if (maxAllWorkersDir > USHRT_MAX - 1) {
 //        processor_count = USHRT_MAX - 1;
 //    }
@@ -54,7 +59,7 @@ void DirMap::createWorkersThreads()
     QVector<DirWorker*> vecDirWorker(processor_count, nullptr);
     for (unsigned int var = 0; var < processor_count; ++var) {
         QThread *threadWorker = new QThread();
-        DirWorker *worker = new DirWorker(var + 1, &nodeDirRoot, &vecUnexploredNodesDir, &mutexDirUnexplored);
+        DirWorker *worker = new DirWorker(var, &vecUnexploredNodesDir, &mutexDirUnexplored);
         worker->moveToThread(threadWorker);
         connect(threadWorker, &QThread::finished, worker, &QObject::deleteLater);
         connect(this, &DirMap::findDirs, worker, &DirWorker::walk);
@@ -72,6 +77,25 @@ void DirMap::createWorkersThreads()
                 connect(vecDirWorker.at(varCurrent), &DirWorker::unexploredNodeAppeared, vecDirWorker.at(varOther), &DirWorker::walk);
             }
         }
+    }
+}
+
+void DirMap::createThreadsConnects()
+{
+
+}
+
+void DirMap::showDirMap()
+{
+    qDebug() << nodeDirRoot.getBasenameMyPath();
+    showChildren(&nodeDirRoot, 1);
+}
+
+void DirMap::showChildren(const NodeDir *node, const int indent)
+{
+    for (const NodeDir *n: node->getVecChildren()) {
+        qDebug() << QString("%1%2").arg(QString(indent, ' ')).arg(n->getBasenameMyPath());
+        showChildren(n, indent + 2);
     }
 }
 

@@ -1,12 +1,28 @@
 #pragma once
 
 #include <QString>
-#include <QVector>
+#include <QList>
+#include <QFileInfo>
+
+struct Stack{
+
+};
 
 struct NodeDir{
-    QVector<NodeDir> vecChildren;
+private:
+    QVector<NodeDir*> vecChildren;
     QString myPath;
-    NodeDir() {}
-    NodeDir(const QString &path) : myPath(path) {}
+    QString myPathBaseName;
+public:
+    NodeDir();
+    NodeDir(const QString &path);
+    ~NodeDir();
+
+    void setMyPath(const QString &path);
+    void addChild(NodeDir *nodeDir);
+    const QVector<NodeDir*> getVecChildren() const; /* finish at the end */ // remove this
+    const QString &getMyPath() const;
+    const QString &getBasenameMyPath() const;
+    NodeDir *getLastChild() const;
 };
 

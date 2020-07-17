@@ -20,7 +20,8 @@ void Creator::start(const QStringList &arguments)
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
 //    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap" << "-f" <<
-    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder" << "-f" <<
+//    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/TestFolder_start" << "-f" <<
+    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects" << "-f" <<
         "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/fileOutput.txt";
 #endif
 

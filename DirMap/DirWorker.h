@@ -12,12 +12,11 @@ class DirWorker : public QObject
     Q_OBJECT
 
     const unsigned int name;
-    NodeDir *nodeDirRootPtr;
+    bool iAmWorking;
     QVector<NodeDir*> *vecUnexploredNodesDirPtr;
     QMutex *mutexDirUnexploredPtr;
 public:
-    explicit DirWorker(const unsigned int nameWorker, NodeDir *nodeDirRoot, QVector<NodeDir*> *vecUnexploredNodesDir,
-                       QMutex *mutexDirUnexplored);
+    explicit DirWorker(const unsigned int nameWorker, QVector<NodeDir*> *vecUnexploredNodesDir, QMutex *mutexDirUnexplored);
 
 public slots:
     void walk();
