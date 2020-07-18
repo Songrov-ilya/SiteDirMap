@@ -40,7 +40,6 @@ void DirMap::goIdleWorkerForWalk()
     for (int var = 0; var < min; ++var) {
         connect(this, &DirMap::findDirs, vecDirWorkers.at(vecIdleWorkers.at(var)), &DirWorker::walk);
         bitHaveAllWorkersFinished.setBit(vecIdleWorkers.at(var));
-        qDebug() << vecIdleWorkers.at(var) << "nameWorker started" << Qt::endl;
     }
     emit findDirs();
 }
@@ -48,23 +47,20 @@ void DirMap::goIdleWorkerForWalk()
 void DirMap::workerFinished(const unsigned nameWorker)
 {
     bitHaveAllWorkersFinished.clearBit(nameWorker);
-    qDebug() << nameWorker << "nameWorker finished" << Qt::endl;
     for (int var = 0; var < bitHaveAllWorkersFinished.size(); ++var) {
         if(bitHaveAllWorkersFinished.testBit(var)){
             return;
         }
     }
-    qDebug() << "all workers finished!" << Qt::endl;
     showDirMap();
-    qDebug() << "finish:)" << Qt::endl;
+    qDebug() << Qt::endl << Qt::endl << "finish:)" << Qt::endl;
 }
 
 void DirMap::createWorkersThreads()
 {
     unsigned int processor_count = std::thread::hardware_concurrency();
-    processor_count = 3;
-    bitHaveAllWorkersFinished.resize(processor_count);
     qDebug() << "processor_count" << processor_count << Qt::endl;
+    bitHaveAllWorkersFinished.resize(processor_count);
     vecDirWorkers.reserve(processor_count);
     for (unsigned int var = 0; var < processor_count; ++var) {
         QThread *threadWorker = new QThread();
@@ -82,15 +78,15 @@ void DirMap::createWorkersThreads()
 void DirMap::showDirMap()
 {
     qDebug() << nodeDirRoot.getBasenameMyPath();
-    showChildren(&nodeDirRoot, 1);
+    showChildren(&nodeDirRoot, 2);
 }
 
 void DirMap::showChildren(const NodeDir *node, const int indent)
 {
-    static int number { 1 };
+    static int number { 0 };
     for (const NodeDir *n: node->getVecChildren()) {
         ++number;
-        qDebug() << QString("%1%2-%3").arg(QString(indent, ' ')).arg(n->getBasenameMyPath()).arg(number);
+        qDebug() << QString("%1%2 - %3").arg(QString(indent, ' ')).arg(n->getBasenameMyPath()).arg(number);
         showChildren(n, indent + 2);
     }
 }

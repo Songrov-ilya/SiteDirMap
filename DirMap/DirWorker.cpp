@@ -16,10 +16,6 @@ void DirWorker::walk()
     if (vecUnexploredNodesDirPtr->isEmpty()) {
         mutexDirUnexploredPtr->unlock();
         emit walkFinished(name);
-        //        if (iAmWorking) {
-        //            emit walkFinished(name);
-        //            iAmWorking = false;
-        //        }
         return;
     }
     unexploredNode = vecUnexploredNodesDirPtr->last();
@@ -57,9 +53,5 @@ QStringList DirWorker::getFolders(const QString &path)
     if (path.isEmpty()) {
         return QStringList();
     }
-    QDir dir(path);
-    QStringList list = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    qDebug() << "list" << list << Qt::endl;
-    //    std::for_each(list.begin(), list.end(), [&path](QString &child){ child.insert(0, path + "/"); });
-    return list;
+    return QDir(path).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 }
