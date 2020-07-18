@@ -29,7 +29,7 @@ private slots:
 private:
     inline void createWorkersThreads();
     void showDirMap();
-    void showChildren(const NodeDir *node, const int indent);
+    void showChildren(const NodeDir *node, const int indent = 3);
 
 signals:
     void findDirs();

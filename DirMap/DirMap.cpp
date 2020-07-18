@@ -78,16 +78,22 @@ void DirMap::createWorkersThreads()
 void DirMap::showDirMap()
 {
     qDebug() << nodeDirRoot.getBasenameMyPath();
-    showChildren(&nodeDirRoot, 2);
+    showChildren(&nodeDirRoot);
 }
 
 void DirMap::showChildren(const NodeDir *node, const int indent)
 {
+    static const int indTree { indent };
     static int number { 0 };
+    QString previousTrees = QString(indent - indTree - 1, ' ');
+    for (int var = 0; var < previousTrees.size(); ++var) {
+        if (((var + 1) % indTree) == 0) {
+            previousTrees[var] = '|';
+        }
+    }
     for (const NodeDir *n: node->getVecChildren()) {
-        ++number;
-        qDebug() << QString("%1%2 - %3").arg(QString(indent, ' ')).arg(n->getBasenameMyPath()).arg(number);
-        showChildren(n, indent + 2);
+        qDebug() << QString("%1|%2%3 (%4)").arg(previousTrees).arg(QString(indTree - 1, '-')).arg(n->getBasenameMyPath()).arg(++number);
+        showChildren(n, indent + indTree);
     }
 }
 
