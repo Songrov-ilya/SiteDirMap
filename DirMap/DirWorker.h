@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QDir>
 #include <QDebug>
+#include <QCoreApplication>
 
 #include "NodeDir.h"
 
@@ -12,7 +13,6 @@ class DirWorker : public QObject
     Q_OBJECT
 
     const unsigned int name;
-    bool iAmWorking;
     QVector<NodeDir*> *vecUnexploredNodesDirPtr;
     QMutex *mutexDirUnexploredPtr;
 public:
@@ -25,7 +25,6 @@ private:
     void findChildren(NodeDir *exploredNode);
     inline QStringList getFolders(const QString &path);
 signals:
-    void walkStarted(const unsigned int nameWorker);
     void walkFinished(const unsigned int nameWorker);
     void unexploredNodeAppeared();
 };

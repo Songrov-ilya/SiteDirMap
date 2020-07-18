@@ -19,7 +19,7 @@ void Creator::start(const QStringList &arguments)
 {
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
-//    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap" << "-f" <<
+//    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/Windows" << "-f" <<
 //    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/TestFolder_start" << "-f" <<
     arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects" << "-f" <<
         "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/fileOutput.txt";
@@ -35,7 +35,7 @@ void Creator::start(const QStringList &arguments)
         const int indexFile = arguments.indexOf("-f");
         if (indexDir == -1 || indexFile == -1 || indexDir + 1 >= arguments.size() || indexDir + 1 >= arguments.size()) {
             qDebug() << "Not valide arguments" << Qt::endl;
-            return;
+            exit(0);
         }
         dirMap = new DirMap();
         dirMap->create(arguments.at(indexDir + 1), arguments.at(indexFile + 1));

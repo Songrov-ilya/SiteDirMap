@@ -16,73 +16,67 @@ DirMap::~DirMap()
 
 void DirMap::create(const QString &targetDir, const QString &fileOutput)
 {
-    qDebug() << "create" << Qt::endl;
     if(!QDir(targetDir).exists()){
         qDebug() << "sory, your target dir is not exist" << Qt::endl;
         return;
     }
     nodeDirRoot.setMyPath(targetDir);
     vecUnexploredNodesDir.append(&nodeDirRoot);
-    emit findDirs();
+    goIdleWorkerForWalk();
 }
 
-void DirMap::workerStarted(const unsigned nameWorker)
+void DirMap::goIdleWorkerForWalk()
 {
-    bitHaveAllWorkersFinished.clearBit(nameWorker);
-    qDebug() << nameWorker << "nameWorker statrted" << Qt::endl;
+    QVector<int> vecIdleWorkers;
+    for (int var = 0; var < bitHaveAllWorkersFinished.size(); ++var) {
+        if (!bitHaveAllWorkersFinished.testBit(var)) {
+            vecIdleWorkers.append(var);
+        }
+    }
+    QObject::disconnect(this, &DirMap::findDirs, nullptr, nullptr);
+    mutexDirUnexplored.lock();
+    const int min = std::min(vecUnexploredNodesDir.size(), vecIdleWorkers.size());
+    mutexDirUnexplored.unlock();
+    for (int var = 0; var < min; ++var) {
+        connect(this, &DirMap::findDirs, vecDirWorkers.at(vecIdleWorkers.at(var)), &DirWorker::walk);
+        bitHaveAllWorkersFinished.setBit(vecIdleWorkers.at(var));
+        qDebug() << vecIdleWorkers.at(var) << "nameWorker started" << Qt::endl;
+    }
+    emit findDirs();
 }
 
 void DirMap::workerFinished(const unsigned nameWorker)
 {
-    bitHaveAllWorkersFinished.setBit(nameWorker);
+    bitHaveAllWorkersFinished.clearBit(nameWorker);
     qDebug() << nameWorker << "nameWorker finished" << Qt::endl;
     for (int var = 0; var < bitHaveAllWorkersFinished.size(); ++var) {
-        if(!bitHaveAllWorkersFinished.testBit(var)){
+        if(bitHaveAllWorkersFinished.testBit(var)){
             return;
         }
     }
-    disconnect(this, nullptr, nullptr, nullptr);
     qDebug() << "all workers finished!" << Qt::endl;
-//    showDirMap();
+    showDirMap();
+    qDebug() << "finish:)" << Qt::endl;
 }
 
 void DirMap::createWorkersThreads()
 {
-    /* finish at the end */ // 1 + 2 + ... + (n – 1) + n = n × (n+1) / 2
     unsigned int processor_count = std::thread::hardware_concurrency();
-    processor_count = 2;
+    processor_count = 3;
     bitHaveAllWorkersFinished.resize(processor_count);
-//    if (maxAllWorkersDir > USHRT_MAX - 1) {
-//        processor_count = USHRT_MAX - 1;
-//    }
     qDebug() << "processor_count" << processor_count << Qt::endl;
-    QVector<DirWorker*> vecDirWorker(processor_count, nullptr);
+    vecDirWorkers.reserve(processor_count);
     for (unsigned int var = 0; var < processor_count; ++var) {
         QThread *threadWorker = new QThread();
         DirWorker *worker = new DirWorker(var, &vecUnexploredNodesDir, &mutexDirUnexplored);
         worker->moveToThread(threadWorker);
         connect(threadWorker, &QThread::finished, worker, &QObject::deleteLater);
-        connect(this, &DirMap::findDirs, worker, &DirWorker::walk);
-        connect(worker, &DirWorker::walkStarted, this, &DirMap::workerStarted);
         connect(worker, &DirWorker::walkFinished, this, &DirMap::workerFinished);
+        connect(worker, &DirWorker::unexploredNodeAppeared, this, &DirMap::goIdleWorkerForWalk);
         threadWorker->start();
         vecThreads.append(threadWorker);
-        vecDirWorker[var] = worker;
+        vecDirWorkers.append(worker);
     }
-
-    // create connects
-    for (int varCurrent = 0; varCurrent < vecDirWorker.size(); ++varCurrent) {
-        for (int varOther = 0; varOther < vecDirWorker.size(); ++varOther) {
-            if (varCurrent != varOther) {
-                connect(vecDirWorker.at(varCurrent), &DirWorker::unexploredNodeAppeared, vecDirWorker.at(varOther), &DirWorker::walk);
-            }
-        }
-    }
-}
-
-void DirMap::createThreadsConnects()
-{
-
 }
 
 void DirMap::showDirMap()
@@ -93,8 +87,10 @@ void DirMap::showDirMap()
 
 void DirMap::showChildren(const NodeDir *node, const int indent)
 {
+    static int number { 1 };
     for (const NodeDir *n: node->getVecChildren()) {
-        qDebug() << QString("%1%2").arg(QString(indent, ' ')).arg(n->getBasenameMyPath());
+        ++number;
+        qDebug() << QString("%1%2-%3").arg(QString(indent, ' ')).arg(n->getBasenameMyPath()).arg(number);
         showChildren(n, indent + 2);
     }
 }
