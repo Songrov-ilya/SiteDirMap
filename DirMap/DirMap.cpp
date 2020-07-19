@@ -80,18 +80,18 @@ void DirMap::createWorkersThreads()
 
 void DirMap::showDirMap()
 {
-    qDebug() << 1 << nodeDirRoot.getBasenameMyPath();
-    result.append(nodeDirRoot.getBasenameMyPath() + '\n');
+    qDebug() << 1 << nodeDirRoot.getBasenameMyPath(Node::DIR);
+    result.append(nodeDirRoot.getBasenameMyPath(Node::DIR) + '\n');
     showChildren(&nodeDirRoot, 3, '-');
     resultIsReady(result);
 }
 
-void DirMap::showChildren(const NodeDir *node, const int indent, const QChar &charSpace)
+void DirMap::showChildren(const Node *node, const int indent, const QChar &charSpace)
 {
     static const int indTree { indent };
     static int number { 1 };
-    for (const NodeDir *n: node->getVecChildren()) {
-        const QString line { QString("%1%2").arg(QString(indent, charSpace)).arg(n->getBasenameMyPath()) };
+    for (const Node *n: node->getVecChildren()) {
+        const QString line { QString("%1%2").arg(QString(indent, charSpace)).arg(n->getBasenameMyPath(Node::DIR)) };
         result.append(line + '\n');
         qDebug() << ++number << line;
         showChildren(n, indent + indTree, charSpace);

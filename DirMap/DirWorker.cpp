@@ -1,6 +1,6 @@
 #include "DirWorker.h"
 
-DirWorker::DirWorker(const unsigned int nameWorker, QVector<NodeDir*> *vecUnexploredNodesDir, QMutex *mutexUnexplored) :
+DirWorker::DirWorker(const unsigned int nameWorker, QVector<Node*> *vecUnexploredNodesDir, QMutex *mutexUnexplored) :
     QObject(nullptr),
     name(nameWorker),
     vecUnexploredNodesDirPtr(vecUnexploredNodesDir),
@@ -11,7 +11,7 @@ DirWorker::DirWorker(const unsigned int nameWorker, QVector<NodeDir*> *vecUnexpl
 
 void DirWorker::walk()
 {
-    NodeDir *unexploredNode;
+    Node *unexploredNode;
     mutexDirUnexploredPtr->lock();
     if (vecUnexploredNodesDirPtr->isEmpty()) {
         mutexDirUnexploredPtr->unlock();
@@ -25,7 +25,7 @@ void DirWorker::walk()
     findChildren(unexploredNode);
 }
 
-void DirWorker::findChildren(NodeDir *exploredNode)
+void DirWorker::findChildren(Node *exploredNode)
 {
     QStringList listChildrenFolders = getFolders(exploredNode->getMyPath());
     if (listChildrenFolders.isEmpty()) {
@@ -35,7 +35,7 @@ void DirWorker::findChildren(NodeDir *exploredNode)
     if (listChildrenFolders.size() > 1) {
         mutexDirUnexploredPtr->lock();
         for (int var = 0; var < listChildrenFolders.size() - 1; ++var) {
-            NodeDir *node = new NodeDir(exploredNode->getMyPath() + "/" + listChildrenFolders.at(var));
+            Node *node = new Node(exploredNode->getMyPath() + "/" + listChildrenFolders.at(var));
             exploredNode->addChild(node);
             vecUnexploredNodesDirPtr->append(exploredNode->getLastChild());
         }
@@ -43,7 +43,7 @@ void DirWorker::findChildren(NodeDir *exploredNode)
         emit unexploredNodeAppeared();
     }
 
-    NodeDir *node = new NodeDir(exploredNode->getMyPath() + "/" + listChildrenFolders.last());
+    Node *node = new Node(exploredNode->getMyPath() + "/" + listChildrenFolders.last());
     exploredNode->addChild(node);
     findChildren(exploredNode->getLastChild());
 }

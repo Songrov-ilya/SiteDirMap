@@ -22,7 +22,7 @@ SOURCES += \
         Creator.cpp \
         DirMap/DirMap.cpp \
         DirMap/DirWorker.cpp \
-        DirMap/NodeDir.cpp \
+        Node.cpp \
         SiteMap/SiteMap.cpp \
         SiteMap/SiteWorker.cpp \
         main.cpp
@@ -34,9 +34,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     Creator.h \
-    DirMap/DirMap \
     DirMap/DirMap.h \
     DirMap/DirWorker.h \
-    DirMap/NodeDir.h \
+    Node.h \
     SiteMap/SiteMap.h \
     SiteMap/SiteWorker.h

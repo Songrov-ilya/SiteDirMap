@@ -14,8 +14,8 @@ class DirMap : public QObject
     QVector<QThread*> vecThreads;
     QVector<DirWorker*> vecDirWorkers;
     QBitArray bitHaveAllWorkersFinished; // 1 == Started, 0 == Finished
-    NodeDir nodeDirRoot;
-    QVector<NodeDir*> vecUnexploredNodesDir;
+    Node nodeDirRoot;
+    QVector<Node*> vecUnexploredNodesDir;
     QMutex mutexDirUnexplored;
     QString result;
 public:
@@ -30,7 +30,7 @@ private slots:
 private:
     inline void createWorkersThreads();
     void showDirMap();
-    void showChildren(const NodeDir *node, const int indent = 3, const QChar &charSpace = ' ');
+    void showChildren(const Node *node, const int indent = 3, const QChar &charSpace = ' ');
 
 signals:
     void findDirs();
