@@ -6,7 +6,6 @@ Creator::Creator(QObject *parent) :
     siteMap(nullptr)
 {
 
-    qDebug() << "start" << Qt::endl;
 }
 
 Creator::~Creator()
@@ -19,10 +18,7 @@ void Creator::start(const QStringList &arguments)
 {
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
-//    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/Windows" << "-f" <<
-//    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/TestFolder_start" << "-f" <<
-    arg << "--dir" << "-d" << "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects" << "-f" <<
-        "/media/songrov/1478E91378E8F500/IlyaFolder/Songrov_Ilya/Programming/QtProjects/SiteDirMap/fileOutput.txt";
+    arg << "--dir" << "-t" << "/home" << "-f" << "../fileOutputDir.txt";
 #endif
 
     QString flag;
@@ -31,13 +27,36 @@ void Creator::start(const QStringList &arguments)
     }
 
     if (flag == "--dir") {
-        const int indexDir = arguments.indexOf("-d");
+        const int indexDir = arguments.indexOf("-t");
         const int indexFile = arguments.indexOf("-f");
         if (indexDir == -1 || indexFile == -1 || indexDir + 1 >= arguments.size() || indexDir + 1 >= arguments.size()) {
             qDebug() << "Not valide arguments" << Qt::endl;
             exit(0);
         }
         dirMap = new DirMap();
-        dirMap->create(arguments.at(indexDir + 1), arguments.at(indexFile + 1));
+        connect(dirMap, &DirMap::resultIsReady, this, &Creator::writeResult);
+        fileOutput = arguments.at(indexFile + 1);
+        dirMap->create(arguments.at(indexDir + 1));
     }
+    else if (flag == "-h") {
+        qDebug() << "--dir      : creates a dirmap" << Qt::endl;
+        qDebug() << "--site     : creates a sitemap" << Qt::endl;
+        qDebug() << "-t         : target dir or site (</home> or <https://www.google.com/>)" << Qt::endl;
+        qDebug() << "-f         : file output" << Qt::endl;
+        qDebug() << "-h         : help" << Qt::endl;
+    }
+}
+
+void Creator::writeResult(const QString &result)
+{
+    if (fileOutput.isEmpty()) {
+        return;
+    }
+    QFile file(fileOutput);
+    if (!file.open(QFile::WriteOnly)) {
+        qWarning() << "Error, file is not open" << file.fileName() << Qt::endl;
+        return;
+    }
+    file.write(result.toUtf8());
+    file.close();
 }

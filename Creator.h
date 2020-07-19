@@ -12,10 +12,12 @@ class Creator : public QObject
 
     DirMap  *dirMap ;
     SiteMap *siteMap;
+    QString fileOutput;
 public:
     explicit Creator(QObject *parent = nullptr);
     ~Creator();
 
     void start(const QStringList &arguments);
+    void writeResult(const QString &result);
 };
 

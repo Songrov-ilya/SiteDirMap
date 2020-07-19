@@ -2,7 +2,7 @@
 
 NodeDir::NodeDir() {}
 
-NodeDir::NodeDir(const QString &path) : myPath(path), myPathBaseName(QFileInfo(path).baseName())
+NodeDir::NodeDir(const QString &path) : myPath(path)
 {
 }
 
@@ -16,7 +16,6 @@ NodeDir::~NodeDir()
 void NodeDir::setMyPath(const QString &path)
 {
     this->myPath = path;
-    this->myPathBaseName = QFileInfo(path).baseName();
 }
 
 void NodeDir::addChild(NodeDir *nodeDir)
@@ -34,9 +33,9 @@ const QString &NodeDir::getMyPath() const
     return this->myPath;
 }
 
-const QString &NodeDir::getBasenameMyPath() const
+QString NodeDir::getBasenameMyPath() const
 {
-    return this->myPathBaseName;
+    return QFileInfo(myPath).baseName();
 }
 
 NodeDir *NodeDir::getLastChild() const

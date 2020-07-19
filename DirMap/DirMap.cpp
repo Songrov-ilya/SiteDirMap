@@ -14,7 +14,7 @@ DirMap::~DirMap()
     }
 }
 
-void DirMap::create(const QString &targetDir, const QString &fileOutput)
+void DirMap::create(const QString &targetDir)
 {
     if(!QDir(targetDir).exists()){
         qDebug() << "sory, your target dir is not exist" << Qt::endl;
@@ -59,7 +59,10 @@ void DirMap::workerFinished(const unsigned nameWorker)
 void DirMap::createWorkersThreads()
 {
     unsigned int processor_count = std::thread::hardware_concurrency();
-    qDebug() << "processor_count" << processor_count << Qt::endl;
+    if (processor_count > 1) {
+        --processor_count; // first thread == maing thread, 2...n == workers
+    }
+    qDebug() << QString("Please wait... (processor_count %1)").arg(processor_count) << Qt::endl;
     bitHaveAllWorkersFinished.resize(processor_count);
     vecDirWorkers.reserve(processor_count);
     for (unsigned int var = 0; var < processor_count; ++var) {
@@ -77,23 +80,21 @@ void DirMap::createWorkersThreads()
 
 void DirMap::showDirMap()
 {
-    qDebug() << nodeDirRoot.getBasenameMyPath();
-    showChildren(&nodeDirRoot);
+    qDebug() << 1 << nodeDirRoot.getBasenameMyPath();
+    result.append(nodeDirRoot.getBasenameMyPath() + '\n');
+    showChildren(&nodeDirRoot, 3, '-');
+    resultIsReady(result);
 }
 
-void DirMap::showChildren(const NodeDir *node, const int indent)
+void DirMap::showChildren(const NodeDir *node, const int indent, const QChar &charSpace)
 {
     static const int indTree { indent };
-    static int number { 0 };
-    QString previousTrees = QString(indent - indTree - 1, ' ');
-    for (int var = 0; var < previousTrees.size(); ++var) {
-        if (((var + 1) % indTree) == 0) {
-            previousTrees[var] = '|';
-        }
-    }
+    static int number { 1 };
     for (const NodeDir *n: node->getVecChildren()) {
-        qDebug() << QString("%1|%2%3 (%4)").arg(previousTrees).arg(QString(indTree - 1, '-')).arg(n->getBasenameMyPath()).arg(++number);
-        showChildren(n, indent + indTree);
+        const QString line { QString("%1%2").arg(QString(indent, charSpace)).arg(n->getBasenameMyPath()) };
+        result.append(line + '\n');
+        qDebug() << ++number << line;
+        showChildren(n, indent + indTree, charSpace);
     }
 }
 
