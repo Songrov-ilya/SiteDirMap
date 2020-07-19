@@ -39,6 +39,9 @@ QString Node::getBasenameMyPath(const Node::TypeNode typeNode) const
     if (typeNode == TypeNode::DIR) {
         ret = QFileInfo(myPath).baseName();
     }
+    else{
+        ret = QUrl(myPath).path();
+    }
     return ret;
 }
 

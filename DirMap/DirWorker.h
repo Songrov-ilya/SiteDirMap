@@ -4,7 +4,6 @@
 #include <QMutex>
 #include <QDir>
 #include <QDebug>
-#include <QCoreApplication>
 
 #include "Node.h"
 

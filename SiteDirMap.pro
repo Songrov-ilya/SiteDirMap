@@ -1,6 +1,10 @@
-QT -= gui
+#QT -= gui
+QT += gui
+QT += network
+QT += webenginewidgets
 
-CONFIG += c++11 console
+CONFIG += c++11
+CONFIG += console
 CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
@@ -17,12 +21,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += \
         SiteMap \
         DirMap \
+        Node \
 
 SOURCES += \
         Creator.cpp \
         DirMap/DirMap.cpp \
         DirMap/DirWorker.cpp \
-        Node.cpp \
+        Node/Node.cpp \
         SiteMap/SiteMap.cpp \
         SiteMap/SiteWorker.cpp \
         main.cpp
@@ -36,6 +41,6 @@ HEADERS += \
     Creator.h \
     DirMap/DirMap.h \
     DirMap/DirWorker.h \
-    Node.h \
+    Node/Node.h \
     SiteMap/SiteMap.h \
     SiteMap/SiteWorker.h

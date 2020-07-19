@@ -3,6 +3,7 @@
 #include <QString>
 #include <QList>
 #include <QFileInfo>
+#include <QUrl>
 
 struct Node{
 private:
