@@ -5,12 +5,10 @@
 #include <QMutex>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QRegularExpression>
-
-#ifdef QT_DEBUG
-//#include <QWebEngineView>
-#include <QFile>
-#endif
+#include <QTextDocument>
+#include <QTextFrame>
+#include <QTextBlock>
+#include <QSet>
 
 #include "Node.h"
 
@@ -18,22 +16,27 @@ class SiteWorker : public QObject
 {
     Q_OBJECT
 
-    const unsigned int name;
+    const unsigned int nameIndex;
+    const QString rootUrl;
+    QSet<QString> *setAllUrls;
     QVector<Node*> *vecUnexploredNodesSitePtr;
     QMutex *mutexSiteUnexploredPtr;
     Node *currentExploredNode;
-public:
-    explicit SiteWorker(const unsigned int nameWorker, QVector<Node*> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored);
 
+public:
+    explicit SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QSet<QString> *setAllUrls,
+                        QVector<Node*> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored);
 public slots:
     void walk();
 
 private:
     void findChildren(Node *currentExploredNode);
-    QStringList parseResponse(const QByteArray &arr);
+    void parseResponse(QStringList *listInternalLinks, QStringList *listExternalLinks, const QByteArray &arr);
+    void searchLink(QStringList *listInternalLinks, QStringList *listExternalLinks, const QTextFrame *parent);
+    void searchLink(QStringList *listInternalLinks, QStringList *listExternalLinks, const QTextBlock &parent);
 private slots:
     void getResponse(QNetworkReply *reply);
-    void handlingChildren(const QStringList listChildrenLinks);
+    void handlingChildren(const QStringList listInternalLinks, const QStringList listExternalLinks);
     void onIgnoreSSLErrors(QNetworkReply *reply, QList<QSslError> error);
 signals:
     void walkFinished(const unsigned int nameWorker);

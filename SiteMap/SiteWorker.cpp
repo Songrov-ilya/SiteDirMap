@@ -1,8 +1,11 @@
 #include "SiteWorker.h"
 
-SiteWorker::SiteWorker(const unsigned int nameWorker, QVector<Node *> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored) :
+SiteWorker::SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QSet<QString> *setAllUrls,
+                       QVector<Node *> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored) :
     QObject(nullptr),
-    name(nameWorker),
+    nameIndex(nameWorker),
+    rootUrl(rootUrl),
+    setAllUrls(setAllUrls),
     vecUnexploredNodesSitePtr(vecUnexploredNodesSite),
     mutexSiteUnexploredPtr(mutexSiteUnexplored),
     currentExploredNode(nullptr)
@@ -16,7 +19,7 @@ void SiteWorker::walk()
     mutexSiteUnexploredPtr->lock();
     if (vecUnexploredNodesSitePtr->isEmpty()) {
         mutexSiteUnexploredPtr->unlock();
-        emit walkFinished(name);
+        emit walkFinished(nameIndex);
         return;
     }
     unexploredNode = vecUnexploredNodesSitePtr->last();
@@ -37,45 +40,16 @@ void SiteWorker::findChildren(Node *exploredNode)
     }
 
     currentExploredNode = exploredNode;
+    qDebug() << "find" << exploredNode->getMyPath() << Qt::endl;
     QNetworkRequest request(exploredNode->getMyPath());
     mngr.get(request);
 }
 
-QStringList SiteWorker::parseResponse(const QByteArray &arr)
+void SiteWorker::parseResponse(QStringList *listInternalLinks, QStringList *listExternalLinks, const QByteArray &arr)
 {
-    /*
-     * Реклама</a><a href="http://www.google.com.ua/intl/uk/services/">Рішення для бізнесу</a><a href="/intl/uk/about.html">
-     * Усе про Google</a><a href="https://www.google.com/setprefdomain?prefdom=UA&amp;
-     * prev=https://www.google.com.ua/&amp;sig=K_LlgHsLYXq3mcJP9L6UPVeRpLL08%3D">Google.com.ua</a>
-     * </div></div><p style="font-size:8pt;color:#767676">&copy; 2020</p></span></center><script nonce="v3+XNVzckgioOLx1HycYeQ==">
-     * */
-//#ifdef QT_DEBUG
-//    QFile file("../fileSite.txt");
-//    file.open(QFile::WriteOnly);
-//    file.write(arr);
-//    file.close();
-//#endif
-
-//    QWebEngineView *view = new QWebEngineView();
-//        view->load(QUrl("http://qt-project.org/"));
-//        view->shogw();
-
-    QStringList list;
-//    QRegularExpression rx("(www.google.com.ua)");
-//    QRegularExpression rx("/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/");
-//    QRegularExpression rx("(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?");
-//    QRegularExpression rx("(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+");
-//    QRegularExpression rx("/(http|https|ftp|ftps)\\:\\/\\/[a-zA-Z0-9\\-\\.]+\\.[a-zA-Z]{2,3}(\\/\\S*)?/");
-
-    QRegularExpression rx("((?:https?|ftp)://\\S+)");
-    QRegularExpressionMatchIterator rxIterator = rx.globalMatch(arr);
-    while (rxIterator.hasNext()) {
-        QRegularExpressionMatch match = rxIterator.next();
-        QString link = match.captured(1);
-        list << link;
-    }
-//    list << "https://www.google.com/";
-    return list;
+    QTextDocument doc;
+    doc.setHtml(arr);
+    searchLink(listInternalLinks, listExternalLinks, doc.rootFrame());
 }
 
 void SiteWorker::getResponse(QNetworkReply *reply)
@@ -86,29 +60,36 @@ void SiteWorker::getResponse(QNetworkReply *reply)
         qDebug() << "reply->error()" << reply->error() << Qt::endl;
         return;
     }
-//    qDebug() << "byteArrReply" << qPrintable(byteArrReply) << Qt::endl;
-    handlingChildren(parseResponse(byteArrReply));
+    //    qDebug() << "byteArrReply" << qPrintable(byteArrReply) << Qt::endl;
+    QStringList listInternalLinks;
+    QStringList listExternalLinks;
+    parseResponse(&listInternalLinks, &listExternalLinks, byteArrReply);
+    handlingChildren(listInternalLinks, listExternalLinks);
 }
 
-void SiteWorker::handlingChildren(const QStringList listChildrenLinks)
+void SiteWorker::handlingChildren(const QStringList listInternalLinks, const QStringList listExternalLinks)
 {
-    qDebug() << "listChildrenLinks" << qPrintable(listChildrenLinks.join("\n")) << Qt::endl;
-    if (listChildrenLinks.isEmpty()) {
-        walk();
-        return;
-    }
-    if (listChildrenLinks.size() > 1) {
+//    qDebug() << "listChildrenLinks" << qPrintable(listExternalLinks.join("\n")) << Qt::endl;
+    if (listInternalLinks.size() > 1) {
         mutexSiteUnexploredPtr->lock();
-        for (int var = 0; var < listChildrenLinks.size() - 1; ++var) {
-            Node *node = new Node(currentExploredNode->getMyPath() + "/" + listChildrenLinks.at(var));
+        for (int var = 0; var < listInternalLinks.size() - 1; ++var) {
+            Node *node = new Node(currentExploredNode->getMyPath() + "/" + listInternalLinks.at(var));
             currentExploredNode->addChild(node);
             vecUnexploredNodesSitePtr->append(currentExploredNode->getLastChild());
         }
         mutexSiteUnexploredPtr->unlock();
         emit unexploredNodeAppeared();
     }
+    for (const QString &external : listExternalLinks) {
+        Node *node = new Node(external);
+        currentExploredNode->addChild(node);
+    }
+    if (listInternalLinks.isEmpty()) {
+        walk();
+        return;
+    }
 
-    Node *node = new Node(listChildrenLinks.last());
+    Node *node = new Node(listInternalLinks.last());
     currentExploredNode->addChild(node);
     findChildren(currentExploredNode->getLastChild());
 }
@@ -117,4 +98,46 @@ void SiteWorker::onIgnoreSSLErrors(QNetworkReply *reply, QList<QSslError> error)
 {
     qDebug() << "SSLErrors:" << error << reply << Qt::endl;
     reply->ignoreSslErrors(error);
+}
+
+
+void SiteWorker::searchLink(QStringList *listInternalLinks, QStringList *listExternalLinks, const QTextFrame *parent)
+{
+    for( QTextFrame::iterator it = parent->begin(); !it.atEnd(); ++it ){
+        QTextFrame *textFrame = it.currentFrame();
+        QTextBlock textBlock = it.currentBlock();
+
+        if( textFrame ){
+            searchLink(listInternalLinks, listExternalLinks, textFrame);
+        }
+        else if( textBlock.isValid() ){
+            searchLink(listInternalLinks, listExternalLinks, textBlock);
+        }
+    }
+}
+
+void SiteWorker::searchLink(QStringList *listInternalLinks, QStringList *listExternalLinks, const QTextBlock &parent)
+{
+    for(QTextBlock::iterator it = parent.begin(); !it.atEnd(); ++it){
+        QTextFragment textFragment = it.fragment();
+        if( textFragment.isValid() ){
+            QTextCharFormat textCharFormat = textFragment.charFormat();
+            if( textCharFormat.isAnchor() ){
+                const QString href = textCharFormat.anchorHref();
+                QUrl url = QUrl::fromUserInput(href);
+                if(url.isValid() && !url.isLocalFile()){
+                    const QString urlStr = url.toString();
+                    if (!setAllUrls->insert(urlStr)->isNull()) {
+                        if (urlStr.contains(rootUrl)) {
+                            static int numUrl { 0 };
+                            qDebug() << ++numUrl << urlStr;
+                            listInternalLinks->append(urlStr);
+                            continue;
+                        }
+                        listExternalLinks->append(urlStr);
+                    }
+                }
+            }
+        }
+    }
 }

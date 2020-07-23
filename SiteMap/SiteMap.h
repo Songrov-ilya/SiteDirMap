@@ -7,6 +7,10 @@
 #include <QUrl>
 #include <QBitArray>
 
+#ifdef QT_DEBUG
+#include <QTextDocument>
+#endif
+
 #include "SiteWorker.h"
 
 class SiteMap : public QObject
@@ -16,6 +20,7 @@ class SiteMap : public QObject
     QVector<SiteWorker*> vecSiteWorkers;
     QBitArray bitHaveAllWorkersFinished; // 1 == Started, 0 == Finished
     Node nodeSiteRoot;
+    QSet<QString> setAllUrls;
     QVector<Node*> vecUnexploredNodesSite;
     QMutex mutexSiteUnexplored;
     QString result;
@@ -29,7 +34,7 @@ private slots:
     void workerFinished(const unsigned int nameWorker);
     void goIdleWorkerForWalk();
 private:
-    inline void createWorkersThreads();
+    inline void createWorkersThreads(const QString &rootUrl);
     void showSiteMap();
     void showChildren(const Node *node, const int indent = 3, const QChar &charSpace = ' ');
 

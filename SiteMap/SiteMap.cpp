@@ -2,7 +2,7 @@
 
 SiteMap::SiteMap(QObject *parent) : QObject(parent)
 {
-    createWorkersThreads();
+
 }
 
 SiteMap::~SiteMap()
@@ -16,11 +16,15 @@ SiteMap::~SiteMap()
 
 void SiteMap::create(const QString &targetSite)
 {
-    if(!QUrl(targetSite).isValid()){
+    const QUrl url = QUrl::fromUserInput(targetSite);
+    if(!url.isValid() && !url.isLocalFile()){
         qDebug() << "sory, your target site is not valid" << Qt::endl;
         return;
     }
-    nodeSiteRoot.setMyPath(targetSite);
+    // (exemple) targetSite == https://www.google.com.ua/preferences?hl=ru --> mergeUrl == https://www.google.com.ua/preferences
+    const QString mergeUrl = url.scheme() + "://" + url.host() + url.path();
+    createWorkersThreads(mergeUrl);
+    nodeSiteRoot.setMyPath(url.toString());
     vecUnexploredNodesSite.append(&nodeSiteRoot);
     goIdleWorkerForWalk();
 }
@@ -56,7 +60,7 @@ void SiteMap::workerFinished(const unsigned nameWorker)
     qDebug() << Qt::endl << Qt::endl << "finish:)" << Qt::endl;
 }
 
-void SiteMap::createWorkersThreads()
+void SiteMap::createWorkersThreads(const QString &rootUrl)
 {
     unsigned int processor_count = std::thread::hardware_concurrency();
     if (processor_count > 1) {
@@ -67,7 +71,7 @@ void SiteMap::createWorkersThreads()
     vecSiteWorkers.reserve(processor_count);
     for (unsigned int var = 0; var < processor_count; ++var) {
         QThread *threadWorker = new QThread();
-        SiteWorker *worker = new SiteWorker(var, &vecUnexploredNodesSite, &mutexSiteUnexplored);
+        SiteWorker *worker = new SiteWorker(var, rootUrl, &setAllUrls, &vecUnexploredNodesSite, &mutexSiteUnexplored);
         worker->moveToThread(threadWorker);
         connect(threadWorker, &QThread::finished, worker, &QObject::deleteLater);
         connect(worker, &SiteWorker::walkFinished, this, &SiteMap::workerFinished);

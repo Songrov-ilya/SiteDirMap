@@ -19,7 +19,8 @@ void Creator::start(const QStringList &arguments)
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
 //    arg << "--dir" << "-t" << "/home" << "-f" << "../fileOutputDir.txt";
-    arg << "--site" << "-t" << "https://www.google.com/" << "-f" << "../fileOutputSite.txt";
+    arg << "--site" << "-t" << "https://www.google.com" << "-f" << "../fileOutputSite.txt";
+//    arg << "--site" << "-t" << "https://allbible.info/bible/kingjames/mt/20/#!prettyPhoto[iframes]/2/" << "-f" << "../fileOutputSite.txt";
 #endif
 
     QString flag;

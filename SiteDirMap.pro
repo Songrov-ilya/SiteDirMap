@@ -1,7 +1,10 @@
 #QT -= gui
 QT += gui
+QT += widgets
+
 QT += network
-QT += webenginewidgets
+#QT += webenginewidgets
+#QT += webengine
 
 CONFIG += c++11
 CONFIG += console
