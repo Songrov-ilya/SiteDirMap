@@ -17,14 +17,15 @@ class SiteWorker : public QObject
     Q_OBJECT
 
     const unsigned int nameIndex;
-    const QString rootUrl;
+    const QUrl rootUrl;
+    const QString rootUrlStr;
     QSet<QString> *setAllUrls;
     QVector<Node*> *vecUnexploredNodesSitePtr;
     QMutex *mutexSiteUnexploredPtr;
     Node *currentExploredNode;
     const bool useDuplicateUrls; // extension
 public:
-    explicit SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QSet<QString> *setAllUrls,
+    explicit SiteWorker(const unsigned int nameWorker, const QUrl &rootUrl, const bool useDuplicate, QSet<QString> *setAllUrls,
                         QVector<Node*> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored);
 public slots:
     void walk();

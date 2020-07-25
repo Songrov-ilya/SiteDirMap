@@ -28,13 +28,13 @@ public:
     explicit SiteMap(QObject *parent = nullptr);
     ~SiteMap();
 
-    void create(const QString &targetSite);
+    void create(const QString &targetSite, const bool useDuplicate);
 
 private slots:
     void workerFinished(const unsigned int nameWorker);
     void goIdleWorkerForWalk();
 private:
-    inline void createWorkersThreads(const QString &rootUrl);
+    inline void createWorkersThreads(const QUrl &rootUrl, const bool useDuplicate);
     void showSiteMap();
     void showChildren(const Node *node, const int indent = 3, const QChar &charSpace = ' ');
 

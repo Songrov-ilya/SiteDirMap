@@ -1,17 +1,18 @@
 #include "SiteWorker.h"
 
-SiteWorker::SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QSet<QString> *setAllUrls,
+SiteWorker::SiteWorker(const unsigned int nameWorker, const QUrl &rootUrl, const bool useDuplicate, QSet<QString> *setAllUrls,
                        QVector<Node *> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored) :
-    QObject(nullptr),
-    nameIndex(nameWorker),
-    rootUrl(rootUrl),
-    setAllUrls(setAllUrls),
-    vecUnexploredNodesSitePtr(vecUnexploredNodesSite),
-    mutexSiteUnexploredPtr(mutexSiteUnexplored),
-    currentExploredNode(nullptr),
-    useDuplicateUrls(false)
+    QObject(nullptr)
+  , nameIndex(nameWorker)
+  , rootUrl(rootUrl)
+  , rootUrlStr(rootUrl.toString())
+  , setAllUrls(setAllUrls)
+  , vecUnexploredNodesSitePtr(vecUnexploredNodesSite)
+  , mutexSiteUnexploredPtr(mutexSiteUnexplored)
+  , currentExploredNode(nullptr)
+  , useDuplicateUrls(useDuplicate)
 {
-
+    
 }
 
 void SiteWorker::walk()
@@ -26,7 +27,7 @@ void SiteWorker::walk()
     unexploredNode = vecUnexploredNodesSitePtr->last();
     vecUnexploredNodesSitePtr->pop_back();
     mutexSiteUnexploredPtr->unlock();
-
+    
     findChildren(unexploredNode);
 }
 
@@ -39,9 +40,9 @@ void SiteWorker::findChildren(Node *exploredNode)
         connect(&mngr, &QNetworkAccessManager::finished, this, &SiteWorker::getResponse);
         notConnected = false;
     }
-
+    
     currentExploredNode = exploredNode;
-    qDebug() << Qt::endl << "*** find ***" << exploredNode->getMyPath() << Qt::endl;
+    qDebug() << Qt::endl << "request: " << exploredNode->getMyPath() << Qt::endl;
     QNetworkRequest request(exploredNode->getMyPath());
     mngr.get(request);
 }
@@ -59,9 +60,10 @@ void SiteWorker::getResponse(QNetworkReply *reply)
     reply->deleteLater();
     if(reply->error() != QNetworkReply::NoError){
         qDebug() << "reply->error()" << reply->error() << Qt::endl;
+//        handlingChildren(QStringList(), QStringList("request error"));
+        handlingChildren(QStringList(), QStringList());
         return;
     }
-    //    qDebug() << "byteArrReply" << qPrintable(byteArrReply) << Qt::endl;
     QStringList listInternalLinks;
     QStringList listExternalLinks;
     parseResponse(&listInternalLinks, &listExternalLinks, byteArrReply);
@@ -88,7 +90,7 @@ void SiteWorker::handlingChildren(const QStringList listInternalLinks, const QSt
         walk();
         return;
     }
-
+    
     Node *node = new Node(listInternalLinks.last());
     currentExploredNode->addChild(node);
     findChildren(currentExploredNode->getLastChild());
@@ -100,13 +102,12 @@ void SiteWorker::onIgnoreSSLErrors(QNetworkReply *reply, QList<QSslError> error)
     reply->ignoreSslErrors(error);
 }
 
-
 void SiteWorker::searchLink(QStringList *listInternalLinks, QStringList *listExternalLinks, const QTextFrame *parent)
 {
     for( QTextFrame::iterator it = parent->begin(); !it.atEnd(); ++it ){
         QTextFrame *textFrame = it.currentFrame();
         QTextBlock textBlock = it.currentBlock();
-
+        
         if( textFrame ){
             searchLink(listInternalLinks, listExternalLinks, textFrame);
         }
@@ -124,23 +125,30 @@ void SiteWorker::searchLink(QStringList *listInternalLinks, QStringList *listExt
             QTextCharFormat textCharFormat = textFragment.charFormat();
             if( textCharFormat.isAnchor() ){
                 const QString href = textCharFormat.anchorHref();
-                QUrl url = QUrl::fromUserInput(href);
-                if(url.isValid() && !url.isLocalFile()){
-                    const QString urlStr = url.toString();
-                    const int oldCount = setAllUrls->count();
-                    setAllUrls->insert(urlStr);
-                    const bool isNewUrl = setAllUrls->count() > oldCount;
-                    if (isNewUrl) { /* finish at the end */ // mutex
-                        if (urlStr.leftRef(rootUrl.size()).contains(rootUrl)) { /* finish at the end */ // https:// != http://
-                            static int numUrl { 0 };
-                            qDebug() << ++numUrl << urlStr;
-                            listInternalLinks->append(urlStr);
-                            continue;
-                        }
-                    }
-                    if (isNewUrl || useDuplicateUrls) {
-                        listExternalLinks->append(urlStr);
-                    }
+                QUrl url = QUrl(href);
+                if(!url.isValid() || url.isLocalFile()){
+                    continue;
+                }
+                if (url.host().isEmpty()) {
+                    url.setHost(rootUrl.host());
+                }
+                if (url.scheme().isEmpty()) {
+                    url.setScheme(rootUrl.scheme());
+                }
+                const QString urlStr = url.toString();
+                const int oldCount = setAllUrls->count();
+                mutexSiteUnexploredPtr->lock();
+                setAllUrls->insert(urlStr);
+                mutexSiteUnexploredPtr->unlock();
+                const bool isNewUrl = setAllUrls->count() > oldCount;
+                if (isNewUrl && urlStr.leftRef(rootUrlStr.size()).contains(rootUrlStr)) {
+                    listInternalLinks->append(urlStr);
+                    qDebug() << urlStr;
+                    continue;
+                }
+                if (isNewUrl || useDuplicateUrls) {
+                    listExternalLinks->append(urlStr);
+                    qDebug() << urlStr;
                 }
             }
         }

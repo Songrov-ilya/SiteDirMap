@@ -14,7 +14,7 @@ SiteMap::~SiteMap()
     }
 }
 
-void SiteMap::create(const QString &targetSite)
+void SiteMap::create(const QString &targetSite, const bool useDuplicate)
 {
     const QUrl url = QUrl::fromUserInput(targetSite);
     if(!url.isValid() && !url.isLocalFile()){
@@ -23,7 +23,7 @@ void SiteMap::create(const QString &targetSite)
     }
     // (exemple) targetSite == https://www.google.com.ua/preferences?hl=ru --> mergeUrl == https://www.google.com.ua/preferences
     const QString mergeUrl = url.scheme() + "://" + url.host() + url.path();
-    createWorkersThreads(mergeUrl);
+    createWorkersThreads(QUrl(mergeUrl), useDuplicate);
     nodeSiteRoot.setMyPath(url.toString());
     setAllUrls.insert(url.toString());
     vecUnexploredNodesSite.append(&nodeSiteRoot);
@@ -61,18 +61,18 @@ void SiteMap::workerFinished(const unsigned nameWorker)
     qDebug() << Qt::endl << Qt::endl << "finish:)" << Qt::endl;
 }
 
-void SiteMap::createWorkersThreads(const QString &rootUrl)
+void SiteMap::createWorkersThreads(const QUrl &rootUrl, const bool useDuplicate)
 {
     unsigned int processor_count = std::thread::hardware_concurrency();
     if (processor_count > 1) {
-        --processor_count; // first thread == maing thread, 2...n == workers
+        ++processor_count; // first thread == maing thread, 2...n == workers
     }
     qDebug() << QString("Please wait... (processor_count %1)").arg(processor_count) << Qt::endl;
     bitHaveAllWorkersFinished.resize(processor_count);
     vecSiteWorkers.reserve(processor_count);
     for (unsigned int var = 0; var < processor_count; ++var) {
         QThread *threadWorker = new QThread();
-        SiteWorker *worker = new SiteWorker(var, rootUrl, &setAllUrls, &vecUnexploredNodesSite, &mutexSiteUnexplored);
+        SiteWorker *worker = new SiteWorker(var, rootUrl, useDuplicate, &setAllUrls, &vecUnexploredNodesSite, &mutexSiteUnexplored);
         worker->moveToThread(threadWorker);
         connect(threadWorker, &QThread::finished, worker, &QObject::deleteLater);
         connect(worker, &SiteWorker::walkFinished, this, &SiteMap::workerFinished);
@@ -85,6 +85,7 @@ void SiteMap::createWorkersThreads(const QString &rootUrl)
 
 void SiteMap::showSiteMap()
 {
+    qDebug() << Qt::endl << "*** resutl ***" << Qt::endl;
     qDebug() << 1 << nodeSiteRoot.getMyPath();
     result.append(nodeSiteRoot.getMyPath() + '\n');
     showChildren(&nodeSiteRoot, 3, '-');

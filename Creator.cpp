@@ -19,7 +19,10 @@ void Creator::start(const QStringList &arguments)
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
 //    arg << "--dir" << "-t" << "/home" << "-f" << "../fileOutputDir.txt";
-    arg << "--site" << "-t" << "https://www.google.com" << "-f" << "../fileOutputSite.txt";
+//    arg << "--site" << "-t" << "https://www.google.com" << "-f" << "../fileOutputSite.txt";
+//    arg << "--site" << "-t" << "https://allbible.info/bible/sinodal" << "-f" << "../fileOutputSite.txt";
+//    arg << "--site" << "-t" << "https://////allbible.info/bible/sinodal/jos/13/" << "-f" << "../fileOutputSite.txt";
+    arg << "--site" << "-t" << "https://github.com/Ilya-Songrov" << "-f" << "../fileOutputSite.txt";
 //    arg << "--site" << "-t" << "https://allbible.info/bible/kingjames/mt/20/#!prettyPhoto[iframes]/2/" << "-f" << "../fileOutputSite.txt";
 #endif
 
@@ -45,14 +48,15 @@ void Creator::start(const QStringList &arguments)
         }
         siteMap = new SiteMap();
         connect(siteMap, &SiteMap::resultIsReady, this, &Creator::writeResult);
-        siteMap->create(target);
+        siteMap->create(target, arguments.contains("--duplicate"));
     }
     else if (flag == "-h") {
-        qDebug() << "--dir      : creates a dirmap" << Qt::endl;
-        qDebug() << "--site     : creates a sitemap" << Qt::endl;
-        qDebug() << "-t         : target dir or site (</home> or <https://www.google.com/>)" << Qt::endl;
-        qDebug() << "-f         : file output" << Qt::endl;
-        qDebug() << "-h         : help" << Qt::endl;
+        qDebug() << "--dir          : creates a dirmap" << Qt::endl;
+        qDebug() << "--site         : creates a sitemap" << Qt::endl;
+        qDebug() << "-t             : target dir or site (</home> or <https://www.google.com/>)" << Qt::endl;
+        qDebug() << "-f             : file output" << Qt::endl;
+        qDebug() << "--duplicate    : (duplicate) if you use this flag then duplicates (site/dir) will be recorded." << Qt::endl;
+        qDebug() << "-h             : help" << Qt::endl;
     }
 }
 
