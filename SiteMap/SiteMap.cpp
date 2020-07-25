@@ -65,7 +65,7 @@ void SiteMap::createWorkersThreads(const QUrl &rootUrl, const bool useDuplicate)
 {
     unsigned int processor_count = std::thread::hardware_concurrency();
     if (processor_count > 1) {
-        ++processor_count; // first thread == maing thread, 2...n == workers
+        --processor_count; // first thread == maing thread, 2...n == workers
     }
     qDebug() << QString("Please wait... (processor_count %1)").arg(processor_count) << Qt::endl;
     bitHaveAllWorkersFinished.resize(processor_count);

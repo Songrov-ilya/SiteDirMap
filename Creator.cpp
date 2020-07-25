@@ -31,7 +31,7 @@ void Creator::start(const QStringList &arguments)
         flag = arguments.at(1);
     }
 
-    if (flag == "--dir" || flag == "--site") {
+    if (arguments.contains("--dir") || arguments.contains("--site")) {
         const int indexTarget = arguments.indexOf("-t");
         const int indexFile = arguments.indexOf("-f");
         if (indexTarget == -1 || indexFile == -1 || indexTarget + 1 >= arguments.size() || indexTarget + 1 >= arguments.size()) {
@@ -40,7 +40,7 @@ void Creator::start(const QStringList &arguments)
         }
         fileOutput = arguments.at(indexFile + 1);
         const QString target { arguments.at(indexTarget + 1) };
-        if (flag == "--dir") {
+        if (arguments.contains("--dir")) {
             dirMap = new DirMap();
             connect(dirMap, &DirMap::resultIsReady, this, &Creator::writeResult);
             dirMap->create(target);
@@ -55,8 +55,13 @@ void Creator::start(const QStringList &arguments)
         qDebug() << "--site         : creates a sitemap" << Qt::endl;
         qDebug() << "-t             : target dir or site (</home> or <https://www.google.com/>)" << Qt::endl;
         qDebug() << "-f             : file output" << Qt::endl;
-        qDebug() << "--duplicate    : (duplicate) if you use this flag then duplicates (site/dir) will be recorded." << Qt::endl;
+        qDebug() << "--duplicate    : if you use this flag then duplicates (site/dir) will be recorded." << Qt::endl;
         qDebug() << "-h             : help" << Qt::endl;
+        exit(0);
+    }
+    else{
+        qDebug() << "Not valide arguments" << Qt::endl;
+        exit(0);
     }
 }
 
