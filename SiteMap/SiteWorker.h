@@ -22,7 +22,7 @@ class SiteWorker : public QObject
     QVector<Node*> *vecUnexploredNodesSitePtr;
     QMutex *mutexSiteUnexploredPtr;
     Node *currentExploredNode;
-
+    const bool useDuplicateUrls; // extension
 public:
     explicit SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QSet<QString> *setAllUrls,
                         QVector<Node*> *vecUnexploredNodesSite, QMutex *mutexSiteUnexplored);

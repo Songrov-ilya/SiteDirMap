@@ -25,6 +25,7 @@ void SiteMap::create(const QString &targetSite)
     const QString mergeUrl = url.scheme() + "://" + url.host() + url.path();
     createWorkersThreads(mergeUrl);
     nodeSiteRoot.setMyPath(url.toString());
+    setAllUrls.insert(url.toString());
     vecUnexploredNodesSite.append(&nodeSiteRoot);
     goIdleWorkerForWalk();
 }
@@ -84,8 +85,8 @@ void SiteMap::createWorkersThreads(const QString &rootUrl)
 
 void SiteMap::showSiteMap()
 {
-    qDebug() << 1 << nodeSiteRoot.getBasenameMyPath(Node::LINK);
-    result.append(nodeSiteRoot.getBasenameMyPath(Node::LINK) + '\n');
+    qDebug() << 1 << nodeSiteRoot.getMyPath();
+    result.append(nodeSiteRoot.getMyPath() + '\n');
     showChildren(&nodeSiteRoot, 3, '-');
     resultIsReady(result);
 }
@@ -95,7 +96,7 @@ void SiteMap::showChildren(const Node *node, const int indent, const QChar &char
     static const int indTree { indent };
     static int number { 1 };
     for (const Node *n: node->getVecChildren()) {
-        const QString line { QString("%1%2").arg(QString(indent, charSpace)).arg(n->getBasenameMyPath(Node::LINK)) };
+        const QString line { QString("%1%2").arg(QString(indent, charSpace)).arg(n->getMyPath()) };
         result.append(line + '\n');
         qDebug() << ++number << line;
         showChildren(n, indent + indTree, charSpace);

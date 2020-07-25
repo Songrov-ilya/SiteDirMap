@@ -8,7 +8,8 @@ SiteWorker::SiteWorker(const unsigned int nameWorker, const QString &rootUrl, QS
     setAllUrls(setAllUrls),
     vecUnexploredNodesSitePtr(vecUnexploredNodesSite),
     mutexSiteUnexploredPtr(mutexSiteUnexplored),
-    currentExploredNode(nullptr)
+    currentExploredNode(nullptr),
+    useDuplicateUrls(false)
 {
 
 }
@@ -40,7 +41,7 @@ void SiteWorker::findChildren(Node *exploredNode)
     }
 
     currentExploredNode = exploredNode;
-    qDebug() << "find" << exploredNode->getMyPath() << Qt::endl;
+    qDebug() << Qt::endl << "*** find ***" << exploredNode->getMyPath() << Qt::endl;
     QNetworkRequest request(exploredNode->getMyPath());
     mngr.get(request);
 }
@@ -69,20 +70,19 @@ void SiteWorker::getResponse(QNetworkReply *reply)
 
 void SiteWorker::handlingChildren(const QStringList listInternalLinks, const QStringList listExternalLinks)
 {
-//    qDebug() << "listChildrenLinks" << qPrintable(listExternalLinks.join("\n")) << Qt::endl;
+    for (const QString &external : listExternalLinks) {
+        Node *node = new Node(external);
+        currentExploredNode->addChild(node);
+    }
     if (listInternalLinks.size() > 1) {
         mutexSiteUnexploredPtr->lock();
         for (int var = 0; var < listInternalLinks.size() - 1; ++var) {
-            Node *node = new Node(currentExploredNode->getMyPath() + "/" + listInternalLinks.at(var));
+            Node *node = new Node(listInternalLinks.at(var));
             currentExploredNode->addChild(node);
             vecUnexploredNodesSitePtr->append(currentExploredNode->getLastChild());
         }
         mutexSiteUnexploredPtr->unlock();
         emit unexploredNodeAppeared();
-    }
-    for (const QString &external : listExternalLinks) {
-        Node *node = new Node(external);
-        currentExploredNode->addChild(node);
     }
     if (listInternalLinks.isEmpty()) {
         walk();
@@ -127,13 +127,18 @@ void SiteWorker::searchLink(QStringList *listInternalLinks, QStringList *listExt
                 QUrl url = QUrl::fromUserInput(href);
                 if(url.isValid() && !url.isLocalFile()){
                     const QString urlStr = url.toString();
-                    if (!setAllUrls->insert(urlStr)->isNull()) {
-                        if (urlStr.contains(rootUrl)) {
+                    const int oldCount = setAllUrls->count();
+                    setAllUrls->insert(urlStr);
+                    const bool isNewUrl = setAllUrls->count() > oldCount;
+                    if (isNewUrl) { /* finish at the end */ // mutex
+                        if (urlStr.leftRef(rootUrl.size()).contains(rootUrl)) { /* finish at the end */ // https:// != http://
                             static int numUrl { 0 };
                             qDebug() << ++numUrl << urlStr;
                             listInternalLinks->append(urlStr);
                             continue;
                         }
+                    }
+                    if (isNewUrl || useDuplicateUrls) {
                         listExternalLinks->append(urlStr);
                     }
                 }
