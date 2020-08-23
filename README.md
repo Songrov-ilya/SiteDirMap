@@ -1,6 +1,7 @@
 If you want to get SiteMap or DirMap you can use this app.
 
 Use this flags:
+
         --dir          : creates a dirmap
         --site         : creates a sitemap
         -t             : target dir or site (</home/user> or <https://www.google.com/>)
