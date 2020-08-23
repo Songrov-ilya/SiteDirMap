@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QCoreApplication>
 #include <QDebug>
 
 #include "SiteMap.h"

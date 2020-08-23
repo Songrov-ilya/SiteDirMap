@@ -18,12 +18,12 @@ void Creator::start(const QStringList &arguments)
 {
 #ifdef QT_DEBUG
     QStringList &arg = const_cast<QStringList&>(arguments);
-//    arg << "--dir" << "-t" << "/home" << "-f" << "../fileOutputDir.txt";
-//    arg << "--site" << "-t" << "https://www.google.com" << "-f" << "../fileOutputSite.txt";
+//    arg << "--dir" << "-t" << "../TestFolder_start" << "-f" << "../fileOutputDir.txt";
+    arg << "--site" << "-t" << "https://www.google.com/" << "-f" << "../fileOutputSite.txt";
 //    arg << "--site" << "-t" << "https://allbible.info/bible/sinodal" << "-f" << "../fileOutputSite.txt";
 //    arg << "--site" << "-t" << "https://////allbible.info/bible/sinodal/jos/13/" << "-f" << "../fileOutputSite.txt";
-    arg << "--site" << "-t" << "https://github.com/Ilya-Songrov" << "-f" << "../fileOutputSite.txt";
 //    arg << "--site" << "-t" << "https://allbible.info/bible/kingjames/mt/20/#!prettyPhoto[iframes]/2/" << "-f" << "../fileOutputSite.txt";
+//    arg << "--site" << "-t" << "https://github.com/Ilya-Songrov" << "-f" << "../fileOutputSite.txt";
 #endif
 
     QString flag;
@@ -34,7 +34,7 @@ void Creator::start(const QStringList &arguments)
     if (arguments.contains("--dir") || arguments.contains("--site")) {
         const int indexTarget = arguments.indexOf("-t");
         const int indexFile = arguments.indexOf("-f");
-        if (indexTarget == -1 || indexFile == -1 || indexTarget + 1 >= arguments.size() || indexTarget + 1 >= arguments.size()) {
+        if (indexTarget == -1 || indexFile == -1 || indexTarget + 1 >= arguments.size() || indexFile + 1 >= arguments.size()) {
             qDebug() << "Not valide arguments" << Qt::endl;
             exit(0);
         }
@@ -50,17 +50,21 @@ void Creator::start(const QStringList &arguments)
         connect(siteMap, &SiteMap::resultIsReady, this, &Creator::writeResult);
         siteMap->create(target, arguments.contains("--duplicate"));
     }
+    else if (flag == "--version" || flag == "-v" || flag == "-V") {
+        qDebug() << "current version:" << QCoreApplication::applicationVersion() << Qt::endl;
+    }
     else if (flag == "-h") {
         qDebug() << "--dir          : creates a dirmap" << Qt::endl;
         qDebug() << "--site         : creates a sitemap" << Qt::endl;
-        qDebug() << "-t             : target dir or site (</home> or <https://www.google.com/>)" << Qt::endl;
+        qDebug() << "-t             : target dir or site (</home/user> or <https://www.google.com/>)" << Qt::endl;
         qDebug() << "-f             : file output" << Qt::endl;
-        qDebug() << "--duplicate    : if you use this flag then duplicates (site/dir) will be recorded." << Qt::endl;
+        qDebug() << "--duplicate    : if you use this flag then duplicates of sites will be recorded." << Qt::endl;
+        qDebug() << "--version      : version app" << Qt::endl;
         qDebug() << "-h             : help" << Qt::endl;
         exit(0);
     }
     else{
-        qDebug() << "Not valide arguments" << Qt::endl;
+        qDebug() << "Not valide flags" << Qt::endl;
         exit(0);
     }
 }
